@@ -109,24 +109,27 @@ def save_image():
         messagebox.showerror("Save Image", "No processed image to save.")
 
 def sensitivity_analysis():
-    x0 = float(entry_x0.get())
-    a = float(entry_a.get())
-    mode = var_mode.get()
-    
-    range_start = float(entry_range_start.get())
-    range_end = float(entry_range_end.get())
-    step = float(entry_step.get())
-    
-    variations = np.arange(range_start, range_end + step, step)
-    
-    result_images = []
-    result_values = []
-    
-    for var in variations:
-        result_images.append(process_image(image_path, var, a, mode))
-        result_values.append(var)
-    
-    display_sensitivity_results(result_images, result_values)
+    try:
+        x0 = float(entry_x0.get())
+        a = float(entry_a.get())
+        mode = var_mode.get()
+        
+        range_start = float(entry_range_start.get())
+        range_end = float(entry_range_end.get())
+        step = float(entry_step.get())
+        
+        variations = np.arange(range_start, range_end + step, step)
+        
+        result_images = []
+        result_values = []
+        
+        for var in variations:
+            result_images.append(process_image(image_path, var, a, mode))
+            result_values.append(var)
+        
+        display_sensitivity_results(result_images, result_values)
+    except ValueError:
+        messagebox.showerror("Input Error", "Please ensure all input fields are filled with valid numbers.")
 
 def display_sensitivity_results(images, values):
     result_window = tk.Toplevel(root)
