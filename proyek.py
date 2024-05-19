@@ -6,8 +6,6 @@ import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from scipy.stats import chisquare, pearsonr
 import sys
-sys.path.append('randomness_testsuite-master')
-from Complexity import ComplexityTest as ct
 
 
 def sine_map(x, y, a):

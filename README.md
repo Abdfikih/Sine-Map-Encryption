@@ -2,6 +2,8 @@
 
 This project demonstrates image encryption and decryption using a sine map. The application is built with Python and Tkinter for the graphical user interface (GUI), and it provides several functionalities, including encryption, decryption, sensitivity analysis, and statistical tests.
 
+Link Download Application : https://univindonesia-my.sharepoint.com/:f:/g/personal/abdul_fikih_office_ui_ac_id/EnONzF8qOdhOmWY2_edeOmIBR5GbSSx5GFW95wXfUKIR2Q?e=54pQnR
+
 ## Project Overview
 
 This project is a final assignment for the Cryptography course. It aims to demonstrate the principles of image encryption and decryption using a chaotic sine map. The project showcases the application of cryptographic techniques to secure image data and includes various analyses and tests to evaluate the effectiveness of the encryption method.
