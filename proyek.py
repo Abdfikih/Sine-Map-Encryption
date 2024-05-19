@@ -240,10 +240,10 @@ def uaci_npcr_test():
     encrypted_img_noisy = np.bitwise_xor(flat_img_noisy, key).reshape(img_array.shape)
     
     # Hitung NPCR
-    npcr = np.sum(encrypted_img != encrypted_img_noisy) / encrypted_img.size * 100
+    npcr = np.sum(encrypted_img != img_array) / encrypted_img.size * 100
     
     # Hitung UACI
-    uaci = np.sum(np.abs(encrypted_img.astype(np.int16) - encrypted_img_noisy.astype(np.int16))) / (encrypted_img.size * 255) * 100
+    uaci = np.sum(np.abs(encrypted_img.astype(np.int16) - img_array.astype(np.int16))) / (encrypted_img.size * 255) * 100
     
     messagebox.showinfo("UACI and NPCR Test Result", f"NPCR: {npcr:.2f}%\nUACI: {uaci:.2f}%")
 
