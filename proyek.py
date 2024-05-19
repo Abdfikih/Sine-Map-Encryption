@@ -69,6 +69,9 @@ def encrypt_decrypt():
         panel_processed.configure(image=encrypted_img_tk)
         panel_processed.image = encrypted_img_tk
         
+        # Tampilkan gambar hasil enkripsi
+        processed_image = encrypted_image
+        
         # Hitung MSE dan PSNR
         mse = np.mean((original_img_array - decrypted_img_array) ** 2)
         if mse == 0:
@@ -202,7 +205,7 @@ def uaci_npcr_test():
     
     # Hitung UACI
     uaci = np.sum(np.abs(encrypted_img.astype(np.int16) - encrypted_img_noisy.astype(np.int16))) / (encrypted_img.size * 255) * 100
-    
+ 
     messagebox.showinfo("UACI and NPCR Test Result", f"NPCR: {npcr:.2f}%\nUACI: {uaci:.2f}%")
 
 def psnr_test():
