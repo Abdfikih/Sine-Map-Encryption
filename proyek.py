@@ -23,7 +23,7 @@ def generate_key(x0, y0, a, size):
     return key
 
 
-def process_image(image_path, x0, a, mode):
+def process_image(image_path, x0, y0, a, mode):
     img = Image.open(image_path)
     img_array = np.array(img)
     flat_img = img_array.flatten()
@@ -127,6 +127,7 @@ def save_image():
 
 def sensitivity_analysis():
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     mode = var_mode.get()
     
@@ -140,7 +141,7 @@ def sensitivity_analysis():
     result_values = []
     
     for var in variations:
-        result_images.append(process_image(image_path, var, a, mode))
+        result_images.append(process_image(image_path, var, y0, a, mode))
         result_values.append(var)
     
     display_sensitivity_results(result_images, result_values)
