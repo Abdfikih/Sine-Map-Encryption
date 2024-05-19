@@ -5,23 +5,31 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from scipy.stats import chisquare, pearsonr
+import sys
+sys.path.append('randomness_testsuite-master')
+from Complexity import ComplexityTest as ct
 
-def sine_map(x, a):
-    return a * np.sin(np.pi * x)
 
-def generate_key(x0, a, size):
+def sine_map(x, y, a):
+    xn = np.sin(np.pi * a * (y + 3) * x * (1 - x))
+    yn = np.sin(np.pi * a * (x + 1 + 3) * y * (1 - y))
+    return xn, yn
+
+def generate_key(x0, y0, a, size):
     x = x0
+    y = y0
     key = np.zeros(size, dtype=np.uint8)
     for i in range(size):
-        x = sine_map(x, a)
-        key[i] = int(x * 256) % 256  # Menghasilkan nilai integer antara 0 dan 255
+        x, y = sine_map(x, y, a)
+        key[i] = int(x * 256) % 256  # Generate integer value between 0 and 255
     return key
+
 
 def process_image(image_path, x0, a, mode):
     img = Image.open(image_path)
     img_array = np.array(img)
     flat_img = img_array.flatten()
-    key = generate_key(x0, a, flat_img.size)
+    key = generate_key(x0, y0, a, flat_img.size)
     
     processed_img = np.bitwise_xor(flat_img, key)
     processed_img = processed_img.reshape(img_array.shape)
@@ -44,6 +52,7 @@ def encrypt_decrypt():
     root.update_idletasks()
     
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     mode = var_mode.get()
     
@@ -54,7 +63,7 @@ def encrypt_decrypt():
         original_img_array = np.array(original_image)
         flat_original_img = original_img_array.flatten()
         
-        key = generate_key(x0, a, flat_original_img.size)
+        key = generate_key(x0, y0, a, flat_original_img.size)
         
         # Enkripsi gambar
         encrypted_img_array = np.bitwise_xor(flat_original_img, key).reshape(original_img_array.shape)
@@ -68,9 +77,6 @@ def encrypt_decrypt():
         encrypted_img_tk = ImageTk.PhotoImage(encrypted_image)
         panel_processed.configure(image=encrypted_img_tk)
         panel_processed.image = encrypted_img_tk
-        
-        # Tampilkan gambar hasil enkripsi
-        processed_image = encrypted_image
         
         # Hitung MSE dan PSNR
         mse = np.mean((original_img_array - decrypted_img_array) ** 2)
@@ -102,37 +108,44 @@ def encrypt_decrypt():
     progress_bar['value'] = 100
     root.update_idletasks()
 
+def array_to_binary(array):
+    return ''.join(format(byte, '025b') for byte in array)
+
+def save_binary_representation(image_path):
+    binary_sequence = array_to_binary(np.array(processed_image).flatten())
+    txt_file_path = image_path.rsplit('.', 1)[0] + '_binary.txt'
+    with open(txt_file_path, 'w') as f:
+        f.write(binary_sequence)
+        
 def save_image():
     if 'processed_image' in globals():
         file_path = filedialog.asksaveasfilename(defaultextension='.png', filetypes=[("PNG files", '*.png'), ("JPEG files", '*.jpg')])
         if file_path:
             processed_image.save(file_path)
-            messagebox.showinfo("Save Image", "Image successfully saved!")
+            save_binary_representation(file_path)
+            messagebox.showinfo("Save Image", "Image and binary representation successfully saved!")
     else:
         messagebox.showerror("Save Image", "No processed image to save.")
 
 def sensitivity_analysis():
-    try:
-        x0 = float(entry_x0.get())
-        a = float(entry_a.get())
-        mode = var_mode.get()
-        
-        range_start = float(entry_range_start.get())
-        range_end = float(entry_range_end.get())
-        step = float(entry_step.get())
-        
-        variations = np.arange(range_start, range_end + step, step)
-        
-        result_images = []
-        result_values = []
-        
-        for var in variations:
-            result_images.append(process_image(image_path, var, a, mode))
-            result_values.append(var)
-        
-        display_sensitivity_results(result_images, result_values)
-    except ValueError:
-        messagebox.showerror("Input Error", "Please ensure all input fields are filled with valid numbers.")
+    x0 = float(entry_x0.get())
+    a = float(entry_a.get())
+    mode = var_mode.get()
+    
+    range_start = float(entry_range_start.get())
+    range_end = float(entry_range_end.get())
+    step = float(entry_step.get())
+    
+    variations = np.arange(range_start, range_end + step, step)
+    
+    result_images = []
+    result_values = []
+    
+    for var in variations:
+        result_images.append(process_image(image_path, var, a, mode))
+        result_values.append(var)
+    
+    display_sensitivity_results(result_images, result_values)
 
 def display_sensitivity_results(images, values):
     result_window = tk.Toplevel(root)
@@ -150,11 +163,36 @@ def display_sensitivity_results(images, values):
         label = ttk.Label(frame, text=f"x0: {val:.5f}")
         label.pack()
 
+
+def saveKey():
+    try:
+        x0 = float(entry_x0.get())
+        y0 = float(entry_y0.get())
+        a = float(entry_a.get())
+    except ValueError:
+        messagebox.showerror("Input Error", "Please enter valid numerical values for x0 and a.")
+        return
+
+    key_length = 10000  # Example length
+    key = generate_key(x0, y0, a, key_length)
+    
+    # Ask the user where to save the file
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")])
+    if file_path:  # Check if a path was selected
+        with open(file_path, "w") as file:
+            # Convert the numpy array to binary strings
+            binary_strings = [format(byte, '025b') for byte in key]
+            # Join all binary strings into a single string separated by newlines
+            key_str = '\n'.join(binary_strings)
+            file.write(key_str)
+        print(f"Key saved to {file_path}")
+    
 def ergodicity_test():
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     key_length = 10000  # Example length
-    key = generate_key(x0, a, key_length)
+    key = generate_key(x0, y0, a, key_length)
 
     plt.figure()
     plt.hist(key, bins=256, density=True, alpha=0.75, color='blue', label='Generated Key')
@@ -172,16 +210,17 @@ def ergodicity_test():
 
 def correlation_test():
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     key_length = 10000  # Example length
-    key = generate_key(x0, a, key_length)
-
+    key = generate_key(x0, y0, a, key_length)
     key_shifted = np.roll(key, -1)  # Geser kunci dengan satu posisi
     corr, p_corr = pearsonr(key[:-1], key_shifted[:-1])  # Hitung korelasi Pearson
     messagebox.showinfo("Correlation Test Result", f"Pearson correlation: {corr:.2f}, p-value: {p_corr:.2e}")
 
 def uaci_npcr_test():
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     
     img = Image.open(image_path)
@@ -195,7 +234,7 @@ def uaci_npcr_test():
     flat_img = img_array.flatten()
     flat_img_noisy = img_array_noisy.flatten()
     
-    key = generate_key(x0, a, flat_img.size)
+    key = generate_key(x0, y0, a, flat_img.size)
     
     encrypted_img = np.bitwise_xor(flat_img, key).reshape(img_array.shape)
     encrypted_img_noisy = np.bitwise_xor(flat_img_noisy, key).reshape(img_array.shape)
@@ -205,11 +244,12 @@ def uaci_npcr_test():
     
     # Hitung UACI
     uaci = np.sum(np.abs(encrypted_img.astype(np.int16) - encrypted_img_noisy.astype(np.int16))) / (encrypted_img.size * 255) * 100
- 
+    
     messagebox.showinfo("UACI and NPCR Test Result", f"NPCR: {npcr:.2f}%\nUACI: {uaci:.2f}%")
 
 def psnr_test():
     x0 = float(entry_x0.get())
+    y0 = float(entry_y0.get())
     a = float(entry_a.get())
     
     img = Image.open(image_path)
@@ -217,7 +257,7 @@ def psnr_test():
     flat_img = img_array.flatten()
     
     # Enkripsi gambar
-    key = generate_key(x0, a, flat_img.size)
+    key = generate_key(x0, y0, a, flat_img.size)
     encrypted_img = np.bitwise_xor(flat_img, key).reshape(img_array.shape)
     
     # Dekripsi gambar
@@ -276,6 +316,10 @@ ttk.Label(frame_params, text="x0 (0 < x0 < 1):").pack(side=tk.LEFT)
 entry_x0 = ttk.Entry(frame_params, font=('Arial', 10), width=8)
 entry_x0.pack(side=tk.LEFT, padx=5)
 
+ttk.Label(frame_params, text="y0 (0 < y0 < 1):").pack(side=tk.LEFT)
+entry_y0 = ttk.Entry(frame_params, font=('Arial', 10), width=8)
+entry_y0.pack(side=tk.LEFT, padx=5)
+
 ttk.Label(frame_params, text="a (0 < a <= 1):").pack(side=tk.LEFT)
 entry_a = ttk.Entry(frame_params, font=('Arial', 10), width=8)
 entry_a.pack(side=tk.LEFT, padx=5)
@@ -307,6 +351,7 @@ frame_buttons.pack(fill=tk.X, pady=5)
 ttk.Button(frame_buttons, text="Load Image", command=load_image).pack(side=tk.LEFT, padx=10)
 ttk.Button(frame_buttons, text="Encrypt/Decrypt", command=encrypt_decrypt).pack(side=tk.LEFT, padx=10)
 ttk.Button(frame_buttons, text="Save Image", command=save_image).pack(side=tk.LEFT, padx=10)
+ttk.Button(frame_buttons, text="Generate Key", command=saveKey).pack(side=tk.LEFT, padx=10)
 ttk.Button(frame_buttons, text="Sensitivity Analysis", command=sensitivity_analysis).pack(side=tk.LEFT, padx=10)
 ttk.Button(frame_buttons, text="Ergodicity Test", command=ergodicity_test).pack(side=tk.LEFT, padx=10)
 ttk.Button(frame_buttons, text="Correlation Test", command=correlation_test).pack(side=tk.LEFT, padx=10)
